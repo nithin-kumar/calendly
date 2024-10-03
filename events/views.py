@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from scheduler.services import fetch_user_calendar, create_event
+from utils.redis import RedisClientSingleton
 from .models import Event, EventOccurrenceType, EventType
 from .serializers import EventSerializer
 
@@ -131,6 +132,12 @@ def book_event(request, event_id, date):
 
     if not availabilities or not any(slot['key'] == date_time_key for slot in availabilities):
         return Response({"error": "No availabilities found for this date or the specified time slot."}, status=400)
+
+    lock_key = f"lock:{event_id}:{date_time_key}"
+    lock = RedisClientSingleton.get_redis_client().lock(lock_key, timeout=60)  # 60 seconds timeout
+
+    if not lock.acquire(blocking=False):
+        return Response({"error": "This slot is already being booked. Please try another slot."}, status=400)
 
     event_data = {
         'summary': event.name,
