@@ -1,0 +1,31 @@
+version: '3.8'
+include:
+   - infra.yaml
+services:
+  webflow:
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    container_name: calendly
+    ports:
+      - "8000:8000"
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /ToyCalendly
+    environment:
+      - DJANGO_SETTINGS_MODULE=ToyCalendly.settings
+    volumes:
+      - .:/app
+    networks:
+      - calendly_network
+    command: >
+      sh -c "
+      python manage.py makemigrations &&
+      python manage.py migrate &&
+      python manage.py runserver 0.0.0.0:8000
+      "
+networks:
+    calendly_network:
+        driver: bridge

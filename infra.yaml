@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: calendly_db
+      POSTGRES_USER: calendly_user
+      POSTGRES_PASSWORD: calendly_password
+    networks:
+      - calendly_network
+
+  redis:
+    image: redis:6.2
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - calendly_network
