@@ -15,11 +15,10 @@ TODO items for the application:
 
  1. Add the ability to link different Calendar to the application
  2. Send .ics file on successful booking of the event
- 3. Handling race condition of booking an event, adding to a distributed lock
- 4. Authorization of the application
- 5. Testcases are not included, as this is an MVP version of the application
- 6. Application code is not commented properly, need to add comments to the code
- 7. Scalability/Modularity of the application is not prioritized, need to refactor the code to make it more scalable
+ 3. Authorization of the application
+ 4. Testcases are not included, as this is an MVP version of the application
+ 5. Application code is not commented properly, need to add comments to the code
+ 6. Scalability/Modularity of the application is not prioritized, need to refactor the code to make it more scalable
 
 
 How to Run the Application
