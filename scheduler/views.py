@@ -26,7 +26,7 @@ def google_calendar_init(request):
     flow = Flow.from_client_secrets_file(
         CLIENT_SECRETS_FILE,
         scopes=SCOPES,
-        redirect_uri='https://20e1-103-175-137-13.ngrok-free.app/api/google-calendar/callback',
+        redirect_uri='https://3b9d-103-175-137-13.ngrok-free.app/api/google-calendar/callback',
     )
     authorization_url, state = flow.authorization_url(
         access_type='offline',
@@ -42,7 +42,7 @@ def google_calendar_callback(request):
         CLIENT_SECRETS_FILE,
         scopes=SCOPES,
         state=state,
-        redirect_uri='https://20e1-103-175-137-13.ngrok-free.app/api/google-calendar/callback'
+        redirect_uri='https://3b9d-103-175-137-13.ngrok-free.app/api/google-calendar/callback'
     )
 
 

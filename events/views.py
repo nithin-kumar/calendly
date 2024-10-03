@@ -45,7 +45,9 @@ def calendar_days_for_event(request, id):
     except Event.DoesNotExist:
         return Response({"error": "Event not found"}, status=404)
 
-    if event.event_occurrence_type in [EventOccurrenceType.BETWEEN_DATES, EventOccurrenceType.RECURRING]:
+    if event.event_occurrence_type == EventOccurrenceType.RECURRING:
+        date_list = event.event_dates
+    elif event.event_occurrence_type == EventOccurrenceType.BETWEEN_DATES:
         if not event.start_date or not event.end_date:
             return Response({"error": "start_date and end_date are required for this event type"}, status=400)
         date_list = [event.start_date + timedelta(days=x) for x in range((event.end_date - event.start_date).days + 1)]
@@ -68,7 +70,10 @@ def event_availabilities(request, event_id, date):
         return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
 
     if event.event_type == EventType.ONE_ON_ONE:
-        if event.event_occurrence_type == EventOccurrenceType.BETWEEN_DATES:
+        if event.event_occurrence_type == EventOccurrenceType.RECURRING:
+            if date_obj.date() not in [datetime.datetime.strptime(d, '%Y-%m-%d').date() for d in event.event_dates]:
+                return Response({"error": "Date is not in the event's list of dates"}, status=400)
+        elif event.event_occurrence_type == EventOccurrenceType.BETWEEN_DATES:
             if not (datetime.datetime.combine(event.start_date, datetime.time.min) <= date_obj <= datetime.datetime.combine(
                     event.end_date, datetime.time.min)):
                 return Response({"error": "Date is not within the event's start and end dates."}, status=400)
@@ -87,7 +92,12 @@ def event_availabilities(request, event_id, date):
         return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
 
     selected_slots = []
-    if event.event_type == EventType.ONE_OFF:
+    if event.event_occurrence_type == EventOccurrenceType.RECURRING:
+        for date_str in event.event_dates:
+            if date_str == date:
+                date_time = datetime.datetime.strptime(f"{date_str} {event.recurring_event_time}", '%Y-%m-%d %H:%M:%S')
+                selected_slots.append((date_time, date_time + timedelta(minutes=event.duration)))
+    elif event.event_type == EventType.ONE_OFF:
         event_slots = [slot for slot in event.event_dates if slot['date'] == date]
         for time_key in event_slots[0]['time_keys']:
             selected_slots.append((datetime.datetime.strptime(time_key.split("_")[0], '%Y-%m-%dT%H:%M:%S'),
@@ -134,7 +144,7 @@ def book_event(request, event_id, date):
         return Response({"error": "No availabilities found for this date or the specified time slot."}, status=400)
 
     lock_key = f"lock:{event_id}:{date_time_key}"
-    lock = RedisClientSingleton.get_redis_client().lock(lock_key, timeout=60)  # 60 seconds timeout
+    lock = RedisClientSingleton().get_redis_client().lock(lock_key, timeout=60)  # 60 seconds timeout
 
     if not lock.acquire(blocking=False):
         return Response({"error": "This slot is already being booked. Please try another slot."}, status=400)

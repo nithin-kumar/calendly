@@ -48,6 +48,7 @@ class Event(models.Model):
     event_dates = models.JSONField(default=list, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     location = models.CharField(max_length=255, null=True, blank=True)
+    recurring_event_time = models.TimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

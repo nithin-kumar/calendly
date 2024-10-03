@@ -6,7 +6,7 @@ class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
         fields = ['id', 'name', 'event_type', 'start_date', 'end_date', 'duration', 'event_occurrence_type',
-                  'event_dates']
+                  'event_dates', 'recurring_event_time', 'description', 'location', 'created_at', 'updated_at']
 
     def validate(self, data):
         event_occurrence_type = data.get('event_occurrence_type')
@@ -18,7 +18,12 @@ class EventSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     "For ONE_OFF event type, event_dates must be a list of dicts with 'date' and 'time_keys'.")
         elif event_type == EventType.ONE_ON_ONE:
-            if event_occurrence_type in [EventOccurrenceType.BETWEEN_DATES, EventOccurrenceType.RECURRING]:
+            if event_occurrence_type == EventOccurrenceType.RECURRING:
+                if not data.get('recurring_event_time') or not isinstance(data.get('event_dates'), list):
+                    raise serializers.ValidationError(
+                        "For ONE_ON_ONE, Recurring event type, event_dates must be a list of dicts with 'date'.")
+
+            elif event_occurrence_type == EventOccurrenceType.BETWEEN_DATES:
                 if not data.get('start_date') or not data.get('end_date'):
                     raise serializers.ValidationError(
                         "start_date and end_date are mandatory for BETWEEN_DATES and RECURRING event types.")
