@@ -101,7 +101,21 @@ curl --location 'http://127.0.0.1:8000/api/events/' \
 
 }'
 ```
-7. View Event
+7. Create Recurring Event
+```commandline
+curl --location 'http://127.0.0.1:8000/api/events/' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer <Token>' \
+--data '{
+    "name": "Resume Review Recurrinng",
+    "event_type": "OO",
+    "event_occurrence_type": "RE",
+    "duration": 30,
+    "event_dates": ["2024-10-11", "2024-10-12"],
+    "recurring_event_time": "15:30:00"
+}'
+```
+8. View Event
 ```commandline
 curl --location --request GET 'http://127.0.0.1:8000/api/events/8dNkdk8JURN/' \
 --header 'Content-Type: application/json' \
@@ -111,15 +125,15 @@ curl --location --request GET 'http://127.0.0.1:8000/api/events/8dNkdk8JURN/' \
   "end_date": "2023-10-01T12:00:00Z"
 }'
 ```
-8 Get Calendar of an event
+9. Get Calendar of an event
 ```commandline
 curl --location 'http://127.0.0.1:8000/api/events/8dNkdk8JURN/calendar_days' \
 ```
-8. Get Available Slots of an event on a date
+10. Get Available Slots of an event on a date
 ```commandline
 curl --location 'http://127.0.0.1:8000/api/events/8dNkdk8JURN/availabilities/2024-10-12/' \
 ```
-9. Book an event
+11. Book an event
 ```commandline
 curl --location 'http://127.0.0.1:8000/api/events/8dNb2L9X6CP/availabilities/2024-10-11/book/' \
 --header 'Content-Type: application/json' \
