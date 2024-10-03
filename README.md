@@ -117,13 +117,8 @@ curl --location 'http://127.0.0.1:8000/api/events/' \
 ```
 8. View Event
 ```commandline
-curl --location --request GET 'http://127.0.0.1:8000/api/events/8dNkdk8JURN/' \
+curl --location 'http://127.0.0.1:8000/api/events/8dOBuctQdX7/' \
 --header 'Content-Type: application/json' \
---data '{
-  "name": "Sample Event",
-  "start_date": "2023-10-01T10:00:00Z",
-  "end_date": "2023-10-01T12:00:00Z"
-}'
 ```
 9. Get Calendar of an event
 ```commandline
