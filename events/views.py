@@ -11,6 +11,42 @@ from .models import Event, EventOccurrenceType, EventType
 from .serializers import EventSerializer
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_user_events(request):
+    user = request.user
+    events = Event.objects.filter(user=user)
+    serializer = EventSerializer(events, many=True)
+    return Response(serializer.data, status=200)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def pause_event(request, event_id):
+    try:
+        event = Event.objects.get(id=event_id)
+    except Event.DoesNotExist:
+        return Response({"error": "Event not found"}, status=404)
+
+    event.active = False
+    event.save()
+
+    return Response({"message": "Event paused successfully"}, status=200)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def activate_event(request, event_id):
+    try:
+        event = Event.objects.get(id=event_id)
+    except Event.DoesNotExist:
+        return Response({"error": "Event not found"}, status=404)
+
+    event.active = True
+    event.save()
+
+    return Response({"message": "Event enabled successfully"}, status=200)
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -45,6 +81,9 @@ def calendar_days_for_event(request, id):
     except Event.DoesNotExist:
         return Response({"error": "Event not found"}, status=404)
 
+    if not event.active:
+        return Response({"error": "Event is paused"}, status=200)
+
     if event.event_occurrence_type == EventOccurrenceType.RECURRING:
         date_list = event.event_dates
     elif event.event_occurrence_type == EventOccurrenceType.BETWEEN_DATES:
@@ -68,6 +107,9 @@ def event_availabilities(request, event_id, date):
         return Response({"error": "Event not found"}, status=404)
     except ValueError:
         return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
+
+    if not event.active:
+        return Response({"error": "Event is paused"}, status=200)
 
     if event.event_type == EventType.ONE_ON_ONE:
         if event.event_occurrence_type == EventOccurrenceType.RECURRING:
@@ -117,6 +159,9 @@ def book_event(request, event_id, date):
         event = Event.objects.get(id=event_id)
     except Event.DoesNotExist:
         return Response({"error": "Event not found"}, status=404)
+
+    if not event.active:
+        return Response({"error": "Event is paused"}, status=200)
 
     user = event.user
     try:

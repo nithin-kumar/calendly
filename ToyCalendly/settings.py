@@ -75,8 +75,11 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'ToyCalendly.urls'
-ACCESS_TOKEN_LIFETIME = timedelta(days=10),
-REFRESH_TOKEN_LIFETIME = timedelta(days=10),
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=10),  # Set the access token lifetime to 1 hour
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=10),  # Set the refresh token lifetime to 7 days
+    # Add other settings if needed
+}
 
 TEMPLATES = [
     {

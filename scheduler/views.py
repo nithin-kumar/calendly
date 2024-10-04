@@ -20,6 +20,11 @@ SCOPES = ['https://www.googleapis.com/auth/calendar', 'openid',
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/userinfo.profile']
 
+
+@api_view(['GET'])
+def health_check(request):
+    return Response({'status': 'ok'})
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def google_calendar_init(request):

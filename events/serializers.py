@@ -5,7 +5,7 @@ from .models import Event, EventType, EventOccurrenceType
 class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
-        fields = ['id', 'name', 'event_type', 'start_date', 'end_date', 'duration', 'event_occurrence_type',
+        fields = ['id', 'name', 'active', 'event_type', 'start_date', 'end_date', 'duration', 'event_occurrence_type',
                   'event_dates', 'recurring_event_time', 'description', 'location', 'created_at', 'updated_at']
 
     def validate(self, data):

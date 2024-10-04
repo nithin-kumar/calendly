@@ -49,8 +49,10 @@ class Event(models.Model):
     description = models.TextField(null=True, blank=True)
     location = models.CharField(max_length=255, null=True, blank=True)
     recurring_event_time = models.TimeField(null=True, blank=True)
+    active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
 
     def __str__(self):
         return self.name
