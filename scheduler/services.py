@@ -45,14 +45,13 @@ def fetch_user_calendar(user, start_time, duration, generated_slots = []):
         for event in events:
             event_start = datetime.datetime.fromisoformat(event['start']['dateTime'])
             event_end = datetime.datetime.fromisoformat(event['end']['dateTime'])
-            if slot_start <= event_end and event_start <= slot_end:
+            if slot_start < event_end and event_start < slot_end:
                 slot_overlap = True
                 break
         if not slot_overlap:
             filtered_slots.append(
                 {'start': formatted_start, 'end': formatted_end,
-                 'key': f"{slot_start.strftime('%Y-%m-%dT%H:%M:%S')}_{slot_end.strftime('%Y-%m-%dT%H:%M:%S')}",
-                 'time_zone': events_result["timeZone"]})
+                 'key': f"{slot_start.strftime('%Y-%m-%dT%H:%M:%S')}_{slot_end.strftime('%Y-%m-%dT%H:%M:%S')}"})
 
 
     return filtered_slots, events_result["timeZone"]
@@ -90,6 +89,7 @@ def create_event(user, event_data):
 
     event = service.events().insert(calendarId='primary', body=event).execute()
     return event
+
 
 
 def get_credentials_from_user(user):

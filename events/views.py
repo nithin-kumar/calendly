@@ -8,8 +8,9 @@ from rest_framework.response import Response
 
 from scheduler.services import fetch_user_calendar, create_event
 from utils.redis import RedisClientSingleton
-from .models import Event, EventOccurrenceType, EventType
+from .models import Event, EventOccurrenceType, EventType, EventBooking
 from .serializers import EventSerializer
+from .services import insert_event_booking
 
 
 @api_view(['GET'])
@@ -64,7 +65,7 @@ def events(request):
             event_dates=event_data.get('event_dates'),
             defaults=event_data
         )
-        event_url = f"{request.get_host()}/api/events/{event.id}/"
+        event_url = f"https://{request.get_host()}/api/events/{event.id}/"
         return Response({"event": EventSerializer(event).data, "url": event_url}, status=201 if created else 200)
     return Response(serializer.errors, status=400)
 
@@ -75,7 +76,7 @@ def handle_event(request, id):
         event = Event.objects.get(id=id)
     except Event.DoesNotExist:
         return Response({"error": "Event not found"}, status=404)
-    return Response({"event": EventSerializer(event).data}, status=200)
+    return Response({"event": EventSerializer(event).data, "event_url": f"https://{request.get_host()}/api/events/{event.id}/"}, status=200)
 
 
 @api_view(['GET'])
@@ -195,7 +196,6 @@ def book_event(request, event_id, date):
 
     date_time_key = start_time_str.split("+")[0] + "_" + end_time_str.split("+")[0]
 
-
     if not availabilities or not any(slot['key'] == date_time_key for slot in availabilities):
         return Response({"error": "No availabilities found for this date or the specified time slot."}, status=400)
 
@@ -219,5 +219,21 @@ def book_event(request, event_id, date):
         created_event = create_event(user, event_data)
     except Exception as e:
         return Response({"error": str(e)}, status=500)
-
+    insert_event_booking(event_id, request.data.get('attendee_email'))
     return Response({"event": created_event}, status=201)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_event_bookings(request, event_id):
+    try:
+        event = Event.objects.get(id=event_id)
+    except Event.DoesNotExist:
+        return Response({"error": "Event not found"}, status=404)
+
+    bookings = EventBooking.objects.filter(event_id=event_id)
+    booking_data = [
+        {"attendee_email": booking.attendee_email, "status": booking.status, "created_at": booking.created_at} for
+        booking in bookings]
+
+    return Response({"bookings": booking_data}, status=200)

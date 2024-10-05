@@ -31,3 +31,9 @@ class EventSerializer(serializers.ModelSerializer):
                 if not data.get('event_dates'):
                     raise serializers.ValidationError("event_dates are mandatory for LIST_OF_DATES event type.")
         return data
+
+
+class EventBookingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Event
+        fields = ["event_id", "attendee_email", "status", "created_at"]

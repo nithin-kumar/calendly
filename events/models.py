@@ -57,3 +57,22 @@ class Event(models.Model):
     def __str__(self):
         return self.name
 
+
+class BookingStatus(models.TextChoices):
+    CONFIRMED = 'CF', _('Confirmed')
+    CANCELLED = 'CL', _('Cancelled')
+
+
+class EventBooking(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    attendee_email = models.EmailField()
+    status = models.CharField(
+        max_length=2,
+        choices=BookingStatus.choices,
+        default=BookingStatus.CONFIRMED,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.attendee_email} - {self.event.name}"
+
