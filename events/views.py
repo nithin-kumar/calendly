@@ -1,6 +1,7 @@
 import datetime
 from datetime import timedelta
 
+import google.auth.exceptions
 from rest_framework.decorators import permission_classes, api_view
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -70,7 +71,10 @@ def events(request):
 
 @api_view(['GET'])
 def handle_event(request, id):
-    event = Event.objects.get(id=id)
+    try:
+        event = Event.objects.get(id=id)
+    except Event.DoesNotExist:
+        return Response({"error": "Event not found"}, status=404)
     return Response({"event": EventSerializer(event).data}, status=200)
 
 
@@ -144,9 +148,13 @@ def event_availabilities(request, event_id, date):
         for time_key in event_slots[0]['time_keys']:
             selected_slots.append((datetime.datetime.strptime(time_key.split("_")[0], '%Y-%m-%dT%H:%M:%S'),
                                    datetime.datetime.strptime(time_key.split("_")[1], '%Y-%m-%dT%H:%M:%S')))
+    try:
+        availabilities, timezone = fetch_user_calendar(user, date_obj, event.duration, selected_slots)
+    except google.auth.exceptions.RefreshError:
+        return Response({"error": "Google credentials expired. Please re-authenticate."}, status=401)
 
-    availabilities = fetch_user_calendar(user, date_obj, event.duration, selected_slots)
-    return Response({"availabilities": availabilities}, status=200)
+
+    return Response({"availabilities": availabilities, "timezone" : timezone}, status=200)
 
 
 
@@ -177,7 +185,10 @@ def book_event(request, event_id, date):
         if date_obj.date() not in [datetime.datetime.strptime(d, '%Y-%m-%d').date() for d in event.event_dates]:
             return Response({"error": "Date is not in the event's list of dates."}, status=400)
 
-    availabilities = fetch_user_calendar(user, date_obj, event.duration)
+    try:
+        availabilities, timezone = fetch_user_calendar(user, date_obj, event.duration)
+    except google.auth.exceptions.RefreshError:
+        return Response({"error": "Google credentials expired. Please re-authenticate."}, status=401)
 
     start_time_str = request.data.get('start_time')
     end_time_str = request.data.get('end_time')
@@ -201,6 +212,7 @@ def book_event(request, event_id, date):
         'attendees': [request.data.get('attendee_email')],
         'description': event.description,
         'location': event.location,
+        'timezone': timezone
     }
 
     try:

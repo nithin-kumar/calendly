@@ -7,6 +7,7 @@ from scheduler.models import GoogleCredentials
 
 
 def fetch_user_calendar(user, start_time, duration, generated_slots = []):
+
     credentials = get_credentials_from_user(user)
     if not credentials:
         raise Exception('Credentials not found')
@@ -21,7 +22,6 @@ def fetch_user_calendar(user, start_time, duration, generated_slots = []):
                 generated_slots.append((current_time, slot_end_time))
             current_time = slot_end_time
 
-
     service = build('calendar', 'v3', credentials=credentials)
     events_result = service.events().list(calendarId='primary', maxResults=10, singleEvents=True,
                                           orderBy='startTime',
@@ -33,11 +33,11 @@ def fetch_user_calendar(user, start_time, duration, generated_slots = []):
     events = events_result.get('items', [])
     filtered_slots = []
     for slot_start, slot_end in generated_slots:
-        slot_start = pytz.timezone('Asia/Kolkata').localize(slot_start)
+        slot_start = pytz.timezone(events_result["timeZone"]).localize(slot_start)
         formatted_start = slot_start.strftime('%Y-%m-%dT%H:%M:%S%z')
         formatted_start = formatted_start[:-2] + ':' + formatted_start[-2:]
 
-        slot_end = pytz.timezone('Asia/Kolkata').localize(slot_end)
+        slot_end = pytz.timezone(events_result["timeZone"]).localize(slot_end)
         formatted_end = slot_end.strftime('%Y-%m-%dT%H:%M:%S%z')
         formatted_end = formatted_end[:-2] + ':' + formatted_end[-2:]
 
@@ -50,10 +50,12 @@ def fetch_user_calendar(user, start_time, duration, generated_slots = []):
                 break
         if not slot_overlap:
             filtered_slots.append(
-                {'start': formatted_start, 'end': formatted_end, 'key': f"{slot_start.strftime('%Y-%m-%dT%H:%M:%S')}_{slot_end.strftime('%Y-%m-%dT%H:%M:%S')}"})
+                {'start': formatted_start, 'end': formatted_end,
+                 'key': f"{slot_start.strftime('%Y-%m-%dT%H:%M:%S')}_{slot_end.strftime('%Y-%m-%dT%H:%M:%S')}",
+                 'time_zone': events_result["timeZone"]})
 
 
-    return filtered_slots
+    return filtered_slots, events_result["timeZone"]
 
 
 
@@ -70,11 +72,11 @@ def create_event(user, event_data):
         'description': event_data.get('description', ''),
         'start': {
             'dateTime': event_data['start_time'],
-            'timeZone': 'Asia/Kolkata',
+            'timeZone': event_data['timezone'],
         },
         'end': {
             'dateTime': event_data['end_time'],
-            'timeZone': 'Asia/Kolkata',
+            'timeZone': event_data['timezone'],
         },
         'attendees': [{'email': attendee, 'responseStatus': 'accepted'} for attendee in event_data.get('attendees', [])],
         'reminders': {
