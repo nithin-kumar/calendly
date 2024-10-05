@@ -89,7 +89,10 @@ def fetch_calendar_events(request):
         datetime.datetime.strptime(request.GET.get('date', datetime.datetime.today().strftime('%Y-%m-%d')),
                                    '%Y-%m-%d').date(), datetime.datetime.min.time())
     duration = int(request.GET.get('duration')) if request.GET.get('duration') else 30
-    filtered_slots = fetch_user_calendar(request.user, start_time, duration)
+    try:
+        filtered_slots, timezone = fetch_user_calendar(request.user, start_time, duration)
+    except google.auth.exceptions.RefreshError:
+        return Response({"error": "Google credentials expired. Please re-authenticate."}, status=401)
     return Response(filtered_slots)
 
 def get_credentials_from_session(request):
