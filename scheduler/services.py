@@ -13,14 +13,7 @@ def fetch_user_calendar(user, start_time, duration, generated_slots = []):
         raise Exception('Credentials not found')
 
 
-    end_time = start_time + datetime.timedelta(days=1)
-    if not generated_slots:
-        current_time = start_time
-        while current_time < end_time:
-            slot_end_time = current_time + datetime.timedelta(minutes=duration)
-            if current_time.strftime('%Y-%m-%d %H:%M:%S') >= datetime.datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%Y-%m-%d %H:%M:%S'):
-                generated_slots.append((current_time, slot_end_time))
-            current_time = slot_end_time
+
 
     service = build('calendar', 'v3', credentials=credentials)
     events_result = service.events().list(calendarId='primary', maxResults=10, singleEvents=True,
@@ -31,6 +24,18 @@ def fetch_user_calendar(user, start_time, duration, generated_slots = []):
                                                                             datetime.time.max).isoformat() + 'Z'
                                           ).execute()
     events = events_result.get('items', [])
+
+    end_time = start_time + datetime.timedelta(days=1)
+    if not generated_slots:
+        current_time = start_time
+
+        while current_time < end_time:
+            slot_end_time = current_time + datetime.timedelta(minutes=duration)
+            if current_time.strftime('%Y-%m-%d %H:%M:%S') >= datetime.datetime.now(pytz.timezone(events_result["timeZone"])).strftime('%Y-%m-%d %H:%M:%S'):
+                generated_slots.append((current_time, slot_end_time))
+            current_time = slot_end_time
+
+
     filtered_slots = []
     for slot_start, slot_end in generated_slots:
         slot_start = pytz.timezone(events_result["timeZone"]).localize(slot_start)

@@ -35,7 +35,6 @@ def google_calendar_init(request):
     )
     authorization_url, state = flow.authorization_url(
         access_type='offline',
-        include_granted_scopes='true'
     )
     return redirect(authorization_url)
 
@@ -90,7 +89,7 @@ def fetch_calendar_events(request):
                                    '%Y-%m-%d').date(), datetime.datetime.min.time())
     duration = int(request.GET.get('duration')) if request.GET.get('duration') else 30
     try:
-        filtered_slots, timezone = fetch_user_calendar(request.user, start_time, duration)
+        filtered_slots, timezone = fetch_user_calendar(request.user, start_time, duration, [])
     except google.auth.exceptions.RefreshError:
         return Response({"error": "Google credentials expired. Please re-authenticate."}, status=401)
     return Response(filtered_slots)

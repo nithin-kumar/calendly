@@ -186,8 +186,20 @@ def book_event(request, event_id, date):
         if date_obj.date() not in [datetime.datetime.strptime(d, '%Y-%m-%d').date() for d in event.event_dates]:
             return Response({"error": "Date is not in the event's list of dates."}, status=400)
 
+    selected_slots = []
+    if event.event_occurrence_type == EventOccurrenceType.RECURRING:
+        for date_str in event.event_dates:
+            if date_str == date:
+                date_time = datetime.datetime.strptime(f"{date_str} {event.recurring_event_time}", '%Y-%m-%d %H:%M:%S')
+                selected_slots.append((date_time, date_time + timedelta(minutes=event.duration)))
+    elif event.event_type == EventType.ONE_OFF:
+        event_slots = [slot for slot in event.event_dates if slot['date'] == date]
+        for time_key in event_slots[0]['time_keys']:
+            selected_slots.append((datetime.datetime.strptime(time_key.split("_")[0], '%Y-%m-%dT%H:%M:%S'),
+                                   datetime.datetime.strptime(time_key.split("_")[1], '%Y-%m-%dT%H:%M:%S')))
+
     try:
-        availabilities, timezone = fetch_user_calendar(user, date_obj, event.duration)
+        availabilities, timezone = fetch_user_calendar(user, date_obj, event.duration, selected_slots)
     except google.auth.exceptions.RefreshError:
         return Response({"error": "Google credentials expired. Please re-authenticate."}, status=401)
 
